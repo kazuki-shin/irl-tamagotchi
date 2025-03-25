@@ -1,1 +1,1 @@
-# irl-tamagotchi
+# gptamagotchi
