@@ -10,6 +10,7 @@ interface ChatInterfaceProps {
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ className = '' }) => {
   const { messages, addUserMessage, isProcessing, companionState } = useCompanion();
   const [inputText, setInputText] = useState('');
+  const [showTextInput, setShowTextInput] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { recordingState, startRecording, stopRecording, resetRecording } = useAudioRecorder();
   
@@ -59,6 +60,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ className = '' }) => {
       startRecording();
     }
   };
+  
+  const toggleInputMode = () => {
+    setShowTextInput(!showTextInput);
+  };
 
   // Format timestamp for display
   const formatTime = (timestamp: string) => {
@@ -95,63 +100,76 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ className = '' }) => {
         <div ref={messagesEndRef} />
       </div>
       
-      {/* Input area */}
+      {/* Input area - prioritize speech */}
       <div className="border-t p-4">
-        <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
-          <button
-            type="button"
-            onClick={handleRecordToggle}
-            className={`p-2 rounded-full ${
-              recordingState.isRecording 
-                ? 'bg-red-500 text-white animate-pulse' 
-                : 'bg-gray-200 text-gray-700'
-            }`}
-          >
-            <MicrophoneIcon />
-          </button>
-          
-          <input
-            type="text"
-            value={inputText}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            disabled={isProcessing || recordingState.isRecording}
-            placeholder={
-              recordingState.isRecording 
-                ? 'Listening...' 
-                : recordingState.isTranscribing 
-                  ? 'Transcribing...' 
-                  : isProcessing 
-                    ? 'Processing...' 
-                    : 'Type a message...'
-            }
-            className="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          
-          <button
-            type="submit"
-            disabled={!inputText.trim() || isProcessing}
-            className={`p-2 rounded-full ${
-              !inputText.trim() || isProcessing
-                ? 'bg-gray-200 text-gray-500'
-                : 'bg-blue-500 text-white'
-            }`}
-          >
-            <SendIcon />
-          </button>
-        </form>
-        
-        {/* Recording status */}
-        {recordingState.isRecording && (
-          <div className="mt-2 text-sm text-center text-red-500">
-            Recording... Click the microphone again to stop.
+        {!showTextInput ? (
+          <div className="flex flex-col items-center">
+            <div className="text-center mb-3">
+              {recordingState.isRecording ? (
+                <p className="text-red-500 font-medium text-lg">I'm listening to you...</p>
+              ) : recordingState.isTranscribing ? (
+                <p className="text-blue-500 font-medium text-lg">Processing what you said...</p>
+              ) : (
+                <p className="text-gray-600 text-lg">Tap the mic and talk to me!</p>
+              )}
+            </div>
+            
+            <button
+              type="button"
+              onClick={handleRecordToggle}
+              disabled={isProcessing || recordingState.isTranscribing}
+              className={`w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-lg transform transition duration-200 ${
+                recordingState.isRecording 
+                  ? 'bg-red-500 text-white animate-pulse scale-110'
+                  : isProcessing || recordingState.isTranscribing
+                    ? 'bg-gray-300 text-gray-500'
+                    : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-105'
+              }`}
+            >
+              <MicrophoneIcon className="w-10 h-10" />
+            </button>
+            
+            <button 
+              onClick={toggleInputMode}
+              className="text-sm text-gray-500 hover:text-indigo-600"
+            >
+              I prefer to type instead
+            </button>
           </div>
-        )}
-        
-        {recordingState.isTranscribing && (
-          <div className="mt-2 text-sm text-center text-blue-500">
-            Transcribing your message...
-          </div>
+        ) : (
+          <form onSubmit={handleSendMessage} className="flex flex-col items-center space-y-3">
+            <div className="flex w-full space-x-2">
+              <input
+                type="text"
+                value={inputText}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                disabled={isProcessing}
+                placeholder={isProcessing ? 'Processing...' : 'Type a message...'}
+                className="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                autoFocus
+              />
+              
+              <button
+                type="submit"
+                disabled={!inputText.trim() || isProcessing}
+                className={`p-2 rounded-full ${
+                  !inputText.trim() || isProcessing
+                    ? 'bg-gray-200 text-gray-500'
+                    : 'bg-blue-500 text-white'
+                }`}
+              >
+                <SendIcon />
+              </button>
+            </div>
+            
+            <button 
+              onClick={toggleInputMode}
+              className="text-sm text-gray-500 hover:text-indigo-600"
+            >
+              Switch back to voice input
+            </button>
+          </form>
         )}
       </div>
     </div>
@@ -188,8 +206,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
 };
 
 // Icons
-const MicrophoneIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+const MicrophoneIcon = ({ className = "h-5 w-5" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor">
     <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
   </svg>
 );

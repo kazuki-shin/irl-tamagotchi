@@ -47,7 +47,7 @@ export const CompanionProvider: React.FC<CompanionProviderProps> = ({ children }
     {
       id: uuidv4(),
       role: 'assistant',
-      content: "Hi there! I'm your GPTamagotchi companion. I'm here to chat, play games, and get to know you better over time. What would you like to talk about today?",
+      content: "Hi there! I'm your GPTamagotchi friend! Tap the mic and let's have a chat. How's your day going?",
       timestamp: new Date().toISOString(),
     },
   ]);
@@ -144,7 +144,7 @@ export const CompanionProvider: React.FC<CompanionProviderProps> = ({ children }
       const errorMessage: Message = {
         id: uuidv4(),
         role: 'assistant',
-        content: "I'm having trouble understanding right now. Can we try again?",
+        content: "Oops! My brain got a little fuzzy. 🤪 Can we try again?",
         timestamp: new Date().toISOString(),
       };
       
@@ -164,7 +164,7 @@ export const CompanionProvider: React.FC<CompanionProviderProps> = ({ children }
       {
         id: uuidv4(),
         role: 'assistant',
-        content: "Let's start fresh! How can I help you today?",
+        content: "Let's start fresh! Tap the mic and tell me what's on your mind.",
         timestamp: new Date().toISOString(),
       },
     ]);

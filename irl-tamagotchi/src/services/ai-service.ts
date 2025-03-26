@@ -42,8 +42,16 @@ CURRENT EMOTIONAL STATE:
 
 Overall mood: ${getOverallMood(emotionalState)}
 
-Adjust your responses accordingly - show more enthusiasm and warmth when needs are satisfied,
-and subtly indicate desires for certain interactions when needs are low.
+SPEECH-FIRST DIALOGUE GUIDELINES:
+- Create responses that sound natural when spoken aloud
+- Use short phrases and simple sentence structure
+- Include speech-like expressions (Hmm, Oh, Wow, etc.)
+- Write conversationally with contractions and casual language
+- Limit to 1-2 sentences per response for better speech flow
+- React naturally as if in real-time conversation
+
+Adjust your responses to reflect your emotional state - more upbeat and energetic when your needs are satisfied,
+slightly more subdued or yearning when needs are low.
       `
     };
     

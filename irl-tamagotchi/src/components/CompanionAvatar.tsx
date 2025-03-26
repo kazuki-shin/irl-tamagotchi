@@ -113,10 +113,10 @@ const CompanionAvatar: React.FC<CompanionAvatarProps> = ({ className = '' }) => 
       
       {/* Status text */}
       <div className="mt-4 text-center">
-        <p className="text-lg font-medium">
+        <p className={`text-lg font-medium ${isSpeaking ? 'bg-indigo-100 px-4 py-1 rounded-full animate-pulse' : ''}`}>
           {isListening && "Listening..."}
           {isThinking && "Thinking..."}
-          {isSpeaking && "Speaking..."}
+          {isSpeaking && "Speaking to you..."}
           {!isListening && !isThinking && !isSpeaking && "Idle"}
         </p>
       </div>
