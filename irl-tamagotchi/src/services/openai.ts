@@ -5,7 +5,10 @@ const hasApiKey = !!API_KEY && API_KEY !== 'your_openai_api_key';
 
 // Create OpenAI client only if API key is available
 const openai = hasApiKey 
-  ? new OpenAI({ apiKey: API_KEY })
+  ? new OpenAI({ 
+      apiKey: API_KEY,
+      dangerouslyAllowBrowser: true // Added to allow browser usage
+    })
   : null;
 
 // Transcribe audio to text using Whisper

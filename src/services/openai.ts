@@ -1,7 +1,11 @@
 import OpenAI from 'openai';
 
+// Access environment variables through window.process or directly from import.meta
+const apiKey = process.env.REACT_APP_OPENAI_API_KEY || '';
+
 const openai = new OpenAI({
-  apiKey: process.env.REACT_APP_OPENAI_API_KEY,
+  apiKey,
+  dangerouslyAllowBrowser: true,
 });
 
 // Transcribe audio to text using Whisper
@@ -14,7 +18,7 @@ export const transcribeAudio = async (audioBlob: Blob): Promise<string> => {
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`,
+        'Authorization': `Bearer ${process.env.REACT_APP_OPENAI_API_KEY || ''}`,
       },
       body: formData,
     });
