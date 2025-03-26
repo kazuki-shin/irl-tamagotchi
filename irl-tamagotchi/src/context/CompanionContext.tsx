@@ -81,25 +81,29 @@ export const CompanionProvider: React.FC<CompanionProviderProps> = ({ children }
       timestamp: new Date().toISOString(),
     };
     
-    // Add user message to state
+    // Add user message to state immediately - ensure this completes before proceeding
     setMessages(prev => [...prev, userMessage]);
     
-    // Save user message to database
-    await saveConversation(userId, 'user', content);
-    
-    // Update companion state
-    setCompanionState(prev => ({ 
-      ...prev, 
-      isListening: false,
-      isThinking: true 
-    }));
-    
     try {
+      // Save user message to database - can be async, doesn't need to block UI
+      saveConversation(userId, 'user', content);
+      
+      // Update companion state to show it's thinking
+      setCompanionState(prev => ({ 
+        ...prev, 
+        isListening: false,
+        isThinking: true 
+      }));
+      
+      // Get the current messages to include the newly added user message
+      // This ensures we have the latest state for the AI processing
+      const currentMessages = [...messages, userMessage];
+      
       // Process the message using AI service
       const result = await aiService.processUserInput(
         userId,
         content,
-        messages,
+        currentMessages, // Use the current messages including the user message
         companionState.emotionalState
       );
       
@@ -111,7 +115,7 @@ export const CompanionProvider: React.FC<CompanionProviderProps> = ({ children }
         timestamp: new Date().toISOString(),
       };
       
-      // Update companion state
+      // Update companion state with new emotional state and speaking status
       setCompanionState(prev => ({
         ...prev,
         emotionalState: result.updatedEmotionalState,
@@ -123,7 +127,7 @@ export const CompanionProvider: React.FC<CompanionProviderProps> = ({ children }
       setMessages(prev => [...prev, assistantMessage]);
       
       // Save assistant message to database
-      await saveConversation(userId, 'assistant', result.response);
+      saveConversation(userId, 'assistant', result.response);
       
       // Speak the response
       await speakText(result.response);

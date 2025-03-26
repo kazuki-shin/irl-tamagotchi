@@ -8,12 +8,12 @@ interface ChatInterfaceProps {
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ className = '' }) => {
-  const { messages, addUserMessage, isProcessing } = useCompanion();
+  const { messages, addUserMessage, isProcessing, companionState } = useCompanion();
   const [inputText, setInputText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { recordingState, startRecording, stopRecording, resetRecording } = useAudioRecorder();
   
-  // Auto-scroll to bottom of messages
+  // Auto-scroll to bottom of messages on any message change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -26,16 +26,30 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ className = '' }) => {
     }
   }, [recordingState.transcription, recordingState.isTranscribing, isProcessing, addUserMessage, resetRecording]);
   
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (inputText.trim() && !isProcessing) {
-      addUserMessage(inputText);
+      // Clear input immediately for better user experience
+      const message = inputText.trim();
       setInputText('');
+      
+      // Then process the message
+      await addUserMessage(message);
     }
   };
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputText(e.target.value);
+  };
+  
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Submit on Enter (without Shift key)
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (inputText.trim() && !isProcessing) {
+        handleSendMessage(e as unknown as React.FormEvent);
+      }
+    }
   };
   
   const handleRecordToggle = () => {
@@ -54,15 +68,30 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ className = '' }) => {
     });
   };
   
+  // Get only the messages we want to display
+  const displayMessages = messages.filter(message => message.role !== 'system');
+  
   return (
     <div className={`flex flex-col bg-white rounded-lg shadow-md ${className}`}>
       {/* Messages container */}
       <div className="flex-1 p-4 overflow-y-auto max-h-[500px]">
-        {messages
-          .filter(message => message.role !== 'system') // Don't display system messages
-          .map((message) => (
-            <MessageBubble key={message.id} message={message} />
-          ))}
+        {displayMessages.map((message) => (
+          <MessageBubble key={message.id} message={message} />
+        ))}
+        
+        {/* Show typing indicator when the companion is thinking */}
+        {companionState.isThinking && (
+          <div className="flex justify-start mb-4">
+            <div className="bg-gray-200 text-gray-800 rounded-lg rounded-bl-none p-3 max-w-[70%]">
+              <div className="flex space-x-1">
+                <div className="h-2 w-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="h-2 w-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                <div className="h-2 w-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '600ms' }}></div>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <div ref={messagesEndRef} />
       </div>
       
@@ -85,6 +114,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ className = '' }) => {
             type="text"
             value={inputText}
             onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
             disabled={isProcessing || recordingState.isRecording}
             placeholder={
               recordingState.isRecording 

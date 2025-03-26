@@ -81,13 +81,16 @@ You may naturally reference these memories when relevant in the conversation.
    */
   processUserInput: async (userId: string, userMessage: string, conversationHistory: any[], emotionalState: EmotionalState): Promise<AIServiceResponse> => {
     try {
+      // Make a local copy of the conversation history to avoid state mutations
+      const messageHistory = [...conversationHistory];
+      
       // Get relevant memories based on the user message
       const memories = await getRelevantMemories(userId, userMessage);
       
       // Prepare messages with context
       const messagesWithContext = await aiService.prepareMessagesWithContext(
         userId,
-        conversationHistory,
+        messageHistory,
         emotionalState,
         memories
       );
@@ -102,11 +105,11 @@ You may naturally reference these memories when relevant in the conversation.
         aiResponse
       );
       
-      // Save the updated emotional state
-      await saveEmotionalState(userId, updatedEmotionalState);
+      // Save the updated emotional state - don't block UI with await
+      saveEmotionalState(userId, updatedEmotionalState);
       
-      // Process new memory from this interaction
-      await processAndStoreMemory(userId, userMessage, aiResponse);
+      // Process new memory from this interaction - don't block UI with await
+      processAndStoreMemory(userId, userMessage, aiResponse);
       
       return {
         response: aiResponse,
