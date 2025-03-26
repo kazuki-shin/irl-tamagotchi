@@ -1,6 +1,7 @@
 import SYSTEM_PROMPT from '../system-prompt';
 import { supabase } from './supabase';
 import { EmotionalState } from '../types';
+import { getGPTResponse } from './openai';
 
 /**
  * AI Service response type
@@ -17,11 +18,10 @@ interface AIServiceResponse {
 export const aiService = {
   /**
    * Prepares a message for the AI with proper context
-   * @param {string} userId - The current user ID
-   * @param {Array} messages - Previous conversation messages
-   * @param {EmotionalState} emotionalState - Current emotional state of the companion
-   * @param {Array} memories - Relevant memories to include
-   * @returns {Promise<Array>} - Prepared messages ready for LLM API
+   * @param userId - The current user ID
+   * @param messages - Previous conversation messages
+   * @param emotionalState - Current emotional state of the companion
+   * @param memories - Relevant memories to include
    */
   prepareMessagesWithContext: async (userId: string, messages: any[], emotionalState: EmotionalState, memories: any[] = []) => {
     // Create system message with full context
@@ -74,11 +74,10 @@ You may naturally reference these memories when relevant in the conversation.
   
   /**
    * Processes user input and generates AI response
-   * @param {string} userId - The current user ID
-   * @param {string} userMessage - The user's message
-   * @param {Array} conversationHistory - Previous messages in the conversation
-   * @param {EmotionalState} emotionalState - Current emotional state
-   * @returns {Promise<AIServiceResponse>} - The AI's response and updated emotional state
+   * @param userId - The current user ID
+   * @param userMessage - The user's message
+   * @param conversationHistory - Previous messages in the conversation
+   * @param emotionalState - Current emotional state
    */
   processUserInput: async (userId: string, userMessage: string, conversationHistory: any[], emotionalState: EmotionalState): Promise<AIServiceResponse> => {
     try {
@@ -93,8 +92,8 @@ You may naturally reference these memories when relevant in the conversation.
         memories
       );
       
-      // Call LLM API (implementation will depend on your API provider)
-      const aiResponse = await callLLMAPI(messagesWithContext);
+      // Call LLM API
+      const aiResponse = await getGPTResponse(messagesWithContext);
       
       // Update emotional state based on conversation
       const updatedEmotionalState = updateEmotionalStateFromInteraction(
@@ -124,11 +123,10 @@ You may naturally reference these memories when relevant in the conversation.
   
   /**
    * Updates the AI context with mini-game results
-   * @param {string} userId - The current user ID
-   * @param {string} gameType - Type of game played
-   * @param {number} score - User's score
-   * @param {EmotionalState} emotionalState - Current emotional state
-   * @returns {Promise<EmotionalState>} - Updated emotional state
+   * @param userId - The current user ID
+   * @param gameType - Type of game played
+   * @param score - User's score
+   * @param emotionalState - Current emotional state
    */
   processGameInteraction: async (userId: string, gameType: string, score: number, emotionalState: EmotionalState): Promise<EmotionalState> => {
     try {
@@ -156,12 +154,9 @@ You may naturally reference these memories when relevant in the conversation.
   }
 };
 
-// Helper functions
-
 /**
  * Gets text description of emotional level
- * @param {number} level - Emotional level (0-1)
- * @returns {string} - Description of level
+ * @param level - Emotional level (0-1)
  */
 function getEmotionLevel(level: number): string {
   if (level > 0.8) return 'excellent';
@@ -173,8 +168,7 @@ function getEmotionLevel(level: number): string {
 
 /**
  * Calculates overall mood based on all emotional dimensions
- * @param {EmotionalState} emotionalState - The companion's emotional state
- * @returns {string} - Overall mood description
+ * @param emotionalState - The companion's emotional state
  */
 function getOverallMood(emotionalState: EmotionalState): string {
   const average = (
@@ -193,10 +187,9 @@ function getOverallMood(emotionalState: EmotionalState): string {
 
 /**
  * Updates emotional state based on conversation
- * @param {EmotionalState} currentState - Current emotional state
- * @param {string} userMessage - User message
- * @param {string} aiResponse - AI response
- * @returns {EmotionalState} - Updated emotional state
+ * @param currentState - Current emotional state
+ * @param userMessage - User message
+ * @param aiResponse - AI response
  */
 function updateEmotionalStateFromInteraction(currentState: EmotionalState, userMessage: string, aiResponse: string): EmotionalState {
   const newState = { ...currentState };
@@ -220,21 +213,9 @@ function updateEmotionalStateFromInteraction(currentState: EmotionalState, userM
 }
 
 /**
- * Placeholder for LLM API call
- * @param {Array} messages - Messages with context
- * @returns {Promise<string>} - AI response
- */
-async function callLLMAPI(messages: any[]): Promise<string> {
-  // Implementation will depend on your API provider (OpenAI, Anthropic, etc.)
-  // For placeholder purposes, we'll return a dummy response
-  console.log('LLM API would be called with messages:', messages);
-  return "I'm here for you! What would you like to talk about today?";
-}
-
-/**
  * Saves emotional state to database
- * @param {string} userId - User ID
- * @param {EmotionalState} emotionalState - Emotional state to save
+ * @param userId - User ID
+ * @param emotionalState - Emotional state to save
  */
 async function saveEmotionalState(userId: string, emotionalState: EmotionalState) {
   try {
@@ -254,11 +235,11 @@ async function saveEmotionalState(userId: string, emotionalState: EmotionalState
 
 /**
  * Creates a memory record
- * @param {string} userId - User ID
- * @param {string} text - Memory text
- * @param {string} source - Memory source
- * @param {number} emotionalImpact - Emotional impact (-1 to 1)
- * @param {string} memoryType - Type of memory
+ * @param userId - User ID
+ * @param text - Memory text
+ * @param source - Memory source
+ * @param emotionalImpact - Emotional impact (-1 to 1)
+ * @param memoryType - Type of memory
  */
 async function createMemory(userId: string, text: string, source: string, emotionalImpact: number, memoryType: string) {
   try {
@@ -268,7 +249,6 @@ async function createMemory(userId: string, text: string, source: string, emotio
     }
     
     // First, get embedding for the text
-    // This would typically use an embedding API like OpenAI's
     const embedding = await generateEmbedding(text);
     
     await supabase
@@ -289,9 +269,9 @@ async function createMemory(userId: string, text: string, source: string, emotio
 
 /**
  * Processes and stores a memory from conversation
- * @param {string} userId - User ID
- * @param {string} userMessage - User message
- * @param {string} aiResponse - AI response
+ * @param userId - User ID
+ * @param userMessage - User message
+ * @param aiResponse - AI response
  */
 async function processAndStoreMemory(userId: string, userMessage: string, aiResponse: string) {
   // Determine if this interaction is worth remembering
@@ -310,9 +290,8 @@ async function processAndStoreMemory(userId: string, userMessage: string, aiResp
 
 /**
  * Retrieves relevant memories based on user message
- * @param {string} userId - User ID
- * @param {string} userMessage - User message
- * @returns {Promise<Array>} - Relevant memories
+ * @param userId - User ID
+ * @param userMessage - User message
  */
 async function getRelevantMemories(userId: string, userMessage: string): Promise<any[]> {
   try {
@@ -346,20 +325,19 @@ async function getRelevantMemories(userId: string, userMessage: string): Promise
 }
 
 /**
- * Placeholder for embedding generation
- * @param {string} text - Text to embed
- * @returns {Promise<Array>} - Embedding vector
+ * Generate embedding for text
+ * @param text - Text to embed
  */
 async function generateEmbedding(text: string): Promise<number[]> {
   // This would typically call an embedding API like OpenAI's
+  // For now, returning a placeholder
   console.log('Generating embedding for:', text);
   return Array(1536).fill(0); // Placeholder embedding vector
 }
 
 /**
  * Gets topic from user message
- * @param {string} message - User message 
- * @returns {string} - Estimated topic
+ * @param message - User message 
  */
 function getTopicFromMessage(message: string): string {
   // Placeholder implementation - would use NLP in production
@@ -369,8 +347,7 @@ function getTopicFromMessage(message: string): string {
 
 /**
  * Estimates emotional impact of message
- * @param {string} message - Message to analyze
- * @returns {number} - Emotional impact (-1 to 1)
+ * @param message - Message to analyze
  */
 function estimateEmotionalImpact(message: string): number {
   // Placeholder implementation - would use sentiment analysis in production

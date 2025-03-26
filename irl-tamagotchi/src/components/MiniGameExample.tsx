@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
-import { useCompanion } from './context/CompanionContext';
-import aiService from './services/ai-service';
+import { useCompanion } from '../context/CompanionContext';
+import aiService from '../services/ai-service';
+
+interface MiniGameExampleProps {
+  className?: string;
+}
 
 /**
- * Example mini game component showing how to integrate with the AI service
+ * Example mini-game component showing AI service integration
  */
-const MiniGameExample: React.FC = () => {
+const MiniGameExample: React.FC<MiniGameExampleProps> = ({ className = '' }) => {
   const { companionState, userId } = useCompanion();
   const [score, setScore] = useState(0);
   const [gameActive, setGameActive] = useState(false);
@@ -45,7 +49,7 @@ const MiniGameExample: React.FC = () => {
   };
   
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className={`bg-white rounded-lg shadow-md p-6 ${className}`}>
       <h2 className="text-xl font-semibold mb-4">Example Mini-Game</h2>
       
       {!gameActive ? (
