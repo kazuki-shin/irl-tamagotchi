@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useCompanion } from '../context/CompanionContext';
 import aiService from '../services/ai-service';
 
@@ -14,15 +14,40 @@ const MiniGameExample: React.FC<MiniGameExampleProps> = ({ className = '' }) => 
   const [score, setScore] = useState(0);
   const [gameActive, setGameActive] = useState(false);
   const [gameResult, setGameResult] = useState('');
+  const [timeLeft, setTimeLeft] = useState(3);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Handle timer countdown and game end
+  useEffect(() => {
+    if (gameActive && timeLeft > 0) {
+      timerRef.current = setTimeout(() => {
+        setTimeLeft(prev => prev - 1);
+      }, 1000);
+    } else if (gameActive && timeLeft === 0) {
+      endGame();
+    }
+    
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, [gameActive, timeLeft]);
   
   const startGame = () => {
     setGameActive(true);
     setScore(0);
     setGameResult('');
+    setTimeLeft(3);
   };
   
   const endGame = async () => {
     setGameActive(false);
+    // Clear any existing timer
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
     
     try {
       // Record the game result with the AI service
@@ -72,6 +97,7 @@ const MiniGameExample: React.FC<MiniGameExampleProps> = ({ className = '' }) => 
         <div className="text-center">
           <div className="mb-4">
             <p className="text-2xl font-bold">Score: {score}</p>
+            <p className="text-lg text-red-500 font-medium">Time left: {timeLeft} seconds</p>
           </div>
           
           <div className="mb-6">
